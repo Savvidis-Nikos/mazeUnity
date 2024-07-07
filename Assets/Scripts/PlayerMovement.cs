@@ -1,28 +1,80 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float speed = 5f;
-    private Rigidbody rb;
+    public CharacterController controller;
+    public float speed = 5f; // Adjust movement speed as needed
+    public float gravity = -9.81f; // Adjust gravity strength
+    public float jumpHeight = 1f; // Adjust jump height
 
-    // Start is called before the first frame update
+    public float shootingRange = 10f;
+   
+    public Transform shootingPoint;
+    public LayerMask obstacleLayer;
+
+    Vector3 velocity;
+    bool isGrounded;
+    [SerializeField]
+    public GameObject bulletPrefab; // Reference to the bullet prefab
+    public float bulletSpeed = 20f;// Speed of the bullet
+    
+
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
-        
+        controller = GetComponent<CharacterController>();
+        if (shootingPoint == null)
+        {
+            GameObject shootingPointObject = new GameObject("ShootingPoint");
+            shootingPointObject.transform.SetParent(transform);
+            shootingPointObject.transform.localPosition = new Vector3(0, 0, 0); // Adjust as needed
+            shootingPoint = shootingPointObject.transform;
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertical = Input.GetAxis("Vertical");
+        // Get user input for movement
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
 
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
+        // Calculate movement vector based on input and speed
+        Vector3 movement = new Vector3(horizontalInput, 0, verticalInput) * speed * Time.deltaTime;
 
-        rb.MovePosition(transform.position + movement * speed * Time.deltaTime);
+        // Apply gravity
+        velocity.y += gravity * Time.deltaTime;
+
+        // Jump logic
+        isGrounded = Physics.Raycast(transform.position, Vector3.down, controller.height / 2);
+        if (isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f; // Adjust for a smoother landing
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+
+        // Move the character controller with collision detection
+        controller.Move(movement + velocity * Time.deltaTime);
+
+        // Shooting mechanism
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            Shoot1();
+        }
     }
+
+     public void Shoot1()
+    {
+        // Instantiate the bullet at the shooting point
+        GameObject bullet = Instantiate(bulletPrefab, shootingPoint.position, shootingPoint.rotation);
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        bulletScript.speed = bulletSpeed;
+
+        // Add forward force to the bullet
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+        rb.velocity = shootingPoint.forward * bulletSpeed;
+    }
+
 }

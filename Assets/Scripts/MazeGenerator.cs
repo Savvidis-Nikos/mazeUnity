@@ -148,7 +148,7 @@ public static class MazeGenerator
         return list;
     }
 
-    public static WallState[,] Generate(int width, int height, out Position startPos)
+    public static WallState[,] Generate(int width, int height, out Position startPos,out Position endPos)
     {
         WallState[,] maze = new WallState[width, height];
         //Initially all the walls EXIST
@@ -161,8 +161,9 @@ public static class MazeGenerator
             }
         }
         startPos = new Position { X = 0, Y = UnityEngine.Random.Range(0, height) };
+        endPos = new Position { X = width-1, Y = UnityEngine.Random.Range(0, height) };
         maze[startPos.X, startPos.Y] &= ~WallState.LEFT; // Remove left wall of leftmost cell
-        maze[width - 1, UnityEngine.Random.Range(0, height)] &= ~WallState.RIGHT; // Remove right wall of rightmost cell
+        maze[endPos.X,endPos.Y] &= ~WallState.RIGHT; // Remove right wall of rightmost cell
         return ApplyRecursiveBacktracker(maze, width, height);
     }
 }

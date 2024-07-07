@@ -4,13 +4,12 @@ using UnityEngine;
 
 public class MazeRenderer : MonoBehaviour
 {
-
     [SerializeField]
-    [Range(1, 50)]
+    [Range(1, 100)]
     private int width = 10;
 
     [SerializeField]
-    [Range(1, 50)]
+    [Range(1, 100)]
     private int height = 10;
 
     [SerializeField]
@@ -25,21 +24,24 @@ public class MazeRenderer : MonoBehaviour
     [SerializeField]
     private GameObject playerPrefab = null;
 
-    protected Position startPosition;
+    [SerializeField]
+    private GameObject obstaclePrefab = null; // New obstacle prefab
 
-    // Start is called before the first frame update
+    protected Position startPosition;
+    protected Position endPosition;
+
     void Start()
     {
-        var maze = MazeGenerator.Generate(width, height, out startPosition);
+        var maze = MazeGenerator.Generate(width, height, out startPosition, out endPosition);
         Draw(maze);
         InstantiatePlayer();
+        PlaceObstacles(maze);
     }
 
     private void Draw(WallState[,] maze)
     {
-
         var floor = Instantiate(floorPrefab, transform);
-        floor.localScale = new Vector3(width, 1, height);
+        floor.localScale = new Vector3(width, 0.01f, height);
 
         for (int i = 0; i < width; ++i)
         {
@@ -84,10 +86,9 @@ public class MazeRenderer : MonoBehaviour
                     }
                 }
             }
-
         }
-
     }
+
     private void InstantiatePlayer()
     {
         float playerHeight = 0.1f; // Adjust this value to match the height of your player and floor level
@@ -95,10 +96,27 @@ public class MazeRenderer : MonoBehaviour
         Instantiate(playerPrefab, startPos, Quaternion.identity);
     }
 
+    private void PlaceObstacles(WallState[,] maze)
+    {
+        // Place obstacles randomly within the maze
+        int numObstacles = (width * height) / 10; // Adjust number of obstacles as needed
+        System.Random rand = new System.Random();
 
-    // Update is called once per frame
+        for (int i = 0; i < numObstacles; ++i)
+        {
+            int x = rand.Next(1, width - 1);
+            int y = rand.Next(1, height - 1);
+
+            // Ensure obstacles are not placed at the start or end positions
+            if ((x == startPosition.X && y == startPosition.Y) || (x == endPosition.X && y == endPosition.Y))
+                continue;
+
+            Vector3 position = new Vector3(-width / 2 + x, 0.5f, -height / 2 + y); // Adjust height as needed
+            Instantiate(obstaclePrefab, position, Quaternion.identity);
+        }
+    }
+
     void Update()
     {
-
     }
 }
